@@ -12,7 +12,7 @@ saildata = rospy.get_param('/sail')
 def node_publisher():
     pub = rospy.Publisher('/sail_servo', UInt16, queue_size=10)
     rospy.init_node('sail_servo', anonymous=True)
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(220)
 
 
     while not rospy.is_shutdown():
