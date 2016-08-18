@@ -57,13 +57,6 @@ rudder/control/Ki: 0
 rudder/control/Kd: 0.1
 
 
-# servo PWM control 
-
-rudder/PWMoffset: 85
-rudder/servolowerlimits: 1140
-rudder/servohigherlimits: 1900
-
-
 # maximum angle
 # absolute value, in [degrees], see https://github.com/Maritime-Robotics-Student-Society/sailing-robot/wiki/Naming-conventions
 rudder/maxAngle: 40
@@ -85,11 +78,7 @@ sail/control/Kd: 0
 # maximum angle
 # in [degrees]
 sail/maxAngle: 90
-# servo PWM control 
   
-sail/PWMoffset: 0
-sail/servolowerlimits: 1100
-sail/servohigherlimits: 1900
 # Safe value for the boat sail to be set at
 # in [degrees]
 sail/initialAngle: 90
@@ -97,9 +86,9 @@ sail/initialAngle: 90
 # Length over which the sheet can be varied
 # (EXAMPLE, PROBABLY NOT ACTUALLY USED)
 # in [m]
-sail/boomsheetDistance: 0.31
-sail/heightofboom: 0.05
-sail/pullypivotDistance: 0.34
+/sail/boomsheetDistance: 0.31
+/sail/heightofboom: 0.05
+/sail/pullypivotDistance: 0.38
 
 # Diameter of the sail winch
 # in [mm]
@@ -111,9 +100,28 @@ sail/winchDiameter: 50
 #
 # To avoid noise of the wind sensor, we average it over a time
 # in [seconds]
-wind/sensor_average_time: 2.0
+wind/sensor_average_time: 0.5
 
 # The route planning should consider the longer term trend of the wind direction
 # so a longer average is calculated
 # in [seconds]
 wind/trend_average_time: 40.0
+
+
+
+
+#
+# Camera detection 
+#
+# Threshold at wich the detection will be triggered (=% of the image that contain the colors)
+# (here 4%)
+camera_detection/threshold: 0.04
+
+# Rate at wich picture are taken 
+camera_detection/rate: 2  # [Hz]
+
+# Lower color:
+camera_detection/Lower_color: [2, 11, 100] # /!\ BGR colorspace
+# Upper color:
+camera_detection/Upper_color: [90, 91, 255] # /!\ BGR colorspace
+

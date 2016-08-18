@@ -11,12 +11,14 @@ import time
 import types
 
 from .navigation import Navigation
-from .heading_planning import HeadingPlan
+from .heading_planning_laylines import HeadingPlan
 from .station_keeping import StationKeeping
 
 def tasks_from_wps(wp_params):
     target_radius = wp_params['acceptRadius']
+    tack_voting_radius = wp_params['tackVotingRadius']
     coordinates = wp_params['table']
+
     res = []
     for wpid in wp_params['list']:
         lat, lon = coordinates[wpid]
@@ -24,7 +26,8 @@ def tasks_from_wps(wp_params):
             'kind': 'to_waypoint',
             'lat': lat,
             'lon': lon,
-            'target_radius': target_radius
+            'target_radius': target_radius,
+            'tack_voting_radius': tack_voting_radius
         })
     return res
 
@@ -56,7 +59,7 @@ class TasksRunner(object):
         kind = taskdict['kind']
         if kind == 'to_waypoint':
             wp = LatLon(taskdict['lat'], taskdict['lon'])
-            kw = {'target_radius': taskdict.get('target_radius', 2.0)}
+            kw = {'target_radius': taskdict.get('target_radius', 2.0), 'tack_voting_radius': taskdict.get('tack_voting_radius', 15.)}
             task = HeadingPlan(waypoint=wp, nav=self.nav, **kw)
         elif kind == 'keep_station':
             markers = [tuple(p) for p in taskdict['markers']]
@@ -68,6 +71,8 @@ class TasksRunner(object):
         task.task_kind = kind
         return task
     
+    on_temporary_task = False
+
     def start_next_task(self):
         """Step to the next task, making it the active task.
         """
@@ -77,12 +82,27 @@ class TasksRunner(object):
             self.task_ix = 0
 
         self.active_task = self.tasks[self.task_ix]
+        self.on_temporary_task = False
         endcond = '' # TODO
         self.log('info', "Running task {}: {} with end condition {}".format(
                     self.task_ix, self.active_task.task_kind, '/'.join(endcond)
         ))
         self.active_task.start()
-        
+
+    def insert_task(self, taskdict):
+        """Do a temporary task.
+
+        After completing the temporary task, control will be return to the
+        regular task that was active before the temporary task was started.
+        """
+        # Decrease task_ix so we go back to the current task when this is done.
+        if not self.on_temporary_task:
+            self.task_ix -= 1
+        self.on_temporary_task = True
+        self.active_task = self._make_task(taskdict)
+        self.active_task.start()
+        self.log('info', "Running intermediate task: {}".format(task.task_kind))
+
     def calculate_state_and_goal(self):
         """Use the active task to calculate what to do now.
         
