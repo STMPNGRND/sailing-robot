@@ -17,12 +17,12 @@ def record():
             ts = datetime.now().strftime("%H%M%S%d")
             csvw.writerow([ts, msg.latitude, msg.longitude])
 
-        rospy.Subscriber('/position', NavSatFix, write)
+        rospy.Subscriber('position', NavSatFix, write)
         rospy.spin()
 
 if __name__ == '__main__':
     try:
-        rospy.init_node("gps_log", anonymous=True)
+        rospy.init_node("debugging_gps_log", anonymous=True)
         record()
     except rospy.ROSInterruptException:
         pass

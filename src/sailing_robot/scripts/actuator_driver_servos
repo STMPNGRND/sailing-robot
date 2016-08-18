@@ -5,7 +5,7 @@ import rospy
 from std_msgs.msg import UInt16, Int16
 import numpy as np
 
-saildata = rospy.get_param('/sail')
+saildata = rospy.get_param('sail')
 pullypivotdistance = saildata['pullypivotDistance']
 boomsheetdistance = saildata['boomsheetDistance']
 boomheight = saildata['heightofboom']
@@ -15,7 +15,7 @@ sailservohigherlimits = saildata['servohigherlimits']
 sailservoneturalpoint = (sailservolowerlimits + sailservohigherlimits)/2
 sailservorange = (sailservohigherlimits - sailservolowerlimits)
 
-rudderdata = rospy.get_param('/rudder')
+rudderdata = rospy.get_param('rudder')
 rudderservoPWMoffset = rudderdata['PWMoffset']
 rudderservolowerlimits = rudderdata['servolowerlimits']
 rudderservohigherlimits = rudderdata['servohigherlimits']
@@ -30,7 +30,8 @@ def setup():
     pi.set_mode(13, pigpio.OUTPUT) # GPIO 13/RPi PIN 33 as rudder servo pin
     
 def sailservoPWMcontrol(data):
-    """  Sail Servo PWM control take in the maximum sail angle from topic /sail_servo. Maximum angle then convert into the sheet length in meters. This value will then used to calculate the rotation anlge (should between 0 to 1260)Final stage of servo control is transfer rotation angle into PWM output a    nd use pigpio service to control the servo.  """
+    """  Sail Servo PWM control take in the maximum sail angle from topic /sail_servo. Maximum angle then convert into the sheet length in meters. This value will then used to calculate the rotation anlge (should between 0 to 1260)Final stage of servo control is transfer rotation angle into PWM output a    nd use pigpio service to control the servo.  """ 
+    sail_angle = data.data
     sheetlength2D = np.sqrt(pullypivotdistance**2 + boomsheetdistance**2 -\
     2*pullypivotdistance*boomsheetdistance*np.cos(1.0*sail_angle/180*np.pi))
     sheetlength = np.sqrt(sheetlength2D**2 + boomheight**2)
@@ -52,15 +53,12 @@ def rudderservoPWMcontrol(data):
 if __name__ == '__main__':
     pi = pigpio.pi();
     try:
-        rospy.init_node('servo_control', anonymous=True)
-        r = rospy.Rate(20)
-        while not rospy.is_shutdown():
-            rospy.Subscriber('/rudder_control', Int16, rudderservoPWMcontrol)
-            rospy.Subscriber('/sail_servo', UInt16, sailservoPWMcontrol)
-            r.sleep()
+        rospy.init_node('actuator_driver_servos', anonymous=True)
+        rospy.Subscriber('rudder_control', Int16, rudderservoPWMcontrol)
+        rospy.Subscriber('sail_servo', UInt16, sailservoPWMcontrol)
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
     
 
     
-

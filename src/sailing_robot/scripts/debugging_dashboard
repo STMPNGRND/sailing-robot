@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+"""
+Supply browser view of ros topics in local network
+"""
 
 import rospy
 from std_msgs.msg import Float32, Float64, Int16, UInt16, String
 from sensor_msgs.msg import NavSatFix
+from rosgraph_msgs.msg import Log
 
 import json
 import os
@@ -17,6 +21,7 @@ STATIC_PATH = os.path.expanduser('~/sailing-robot/dashboard/static')
 simple_topics = [
     ('/heading', Float32),
     ('/goal_heading', Float32),
+    ('/goal_wind_angle', Float32),
     ('/rudder_control', Int16),
     ('/sailing_state', String),
     ('/wind_direction_apparent', Float64),
@@ -60,6 +65,15 @@ class MessageForwarder(object):
         return rospy.Subscriber(topic_name, NavSatFix,
                             lambda m: self.loop.add_callback(forward, m))
 
+    def rosout_forwarding(self):
+        def forward(msg):
+            d = {'topic': '/rosout', 'level': msg.level, 'name': msg.name,
+              'msg': msg.msg, 'file': msg.file, 'line': msg.line,
+              'function': msg.function, 'topics': msg.topics}
+            self.broadcast(d)
+        return rospy.Subscriber('rosout_agg', Log,
+                                lambda m: self.loop.add_callback(forward, m))
+
 class UpdateHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, forwarder):
         self.forwarder = forwarder
@@ -94,7 +108,7 @@ def dashboard_server():
 
 if __name__ == '__main__':
     try:
-        rospy.init_node("serve_dashboard", anonymous=True)
+        rospy.init_node("debugging_dashboard", anonymous=True)
         dashboard_server()
     except rospy.ROSInterruptException:
         pass
